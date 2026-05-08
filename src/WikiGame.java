@@ -39,7 +39,7 @@ public class WikiGame {
         gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0;
         inputPanel.add(new JLabel("End Article (/wiki/...):"), gbc);
         gbc.gridx = 1; gbc.weightx = 1.0;
-        endField = new JTextField("/wiki/Adolf_Hitler", 35);
+        endField = new JTextField("/wiki/Milton_Academy", 35);
         inputPanel.add(endField, gbc);
 
         gbc.gridx = 0; gbc.gridy = 2; gbc.weightx = 0;
