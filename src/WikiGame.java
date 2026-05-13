@@ -1,9 +1,11 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 
 public class WikiGame {
@@ -14,7 +16,7 @@ public class WikiGame {
     private JButton searchButton, stopButton;
     private JLabel statusLabel;
 
-    private int maxDepth = 2;
+    private int maxDepth = 5;
     private ArrayList<String> path = new ArrayList<>();
 
     public static void main(String[] args) {
@@ -135,6 +137,128 @@ public class WikiGame {
 
         return false;
     }
+
+    // Fetches all wiki links from a page by scraping href from the HTML
+    private ArrayList<String> getLinks(String wikiPath) {
+        ArrayList<String> links = new ArrayList<>();
+        String html = "";
+
+        try {
+            URL url = new URL("https://en.wikipedia.org" + wikiPath);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("User-Agent", "WikiGameSolver/1.0");
+
+            if (conn.getResponseCode() != 200) {
+                log("Failed to load: " + wikiPath);
+                return links;
+            }
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String line;
+            while ((line = br.readLine()) != null) {
+                html += line;
+            }
+            conn.disconnect();
+
+        } catch (Exception e) {
+            log("Error loading page: " + wikiPath);
+            return links;
+        }
+
+        // Scan the HTML for href="/wiki/..." and pull out each link
+        int pos = 0;
+        while (pos < html.length()) {
+            int hrefIdx = html.indexOf("href=\"/wiki/", pos);
+            if (hrefIdx == -1) break;
+
+            hrefIdx += 6; // move past href="  to the start of /wiki/
+            int end = html.indexOf("\"", hrefIdx);
+            if (end == -1) break;
+
+            String link = html.substring(hrefIdx, end);
+
+            // Skip special pages
+            if (!link.contains(":") && !link.contains("#") && !links.contains(link)) {
+                links.add(link);
+            }
+
+            pos = end + 1;
+        }
+
+        return links;
+    }
+
+    public void actionPerformed(ActionEvent e) {
+        String command = e.getActionCommand(); //which button was pressed?
+        if (command.equals("go")) { //checks if command was go(go is the command for the go button)
+            String urlText = Link.getText().trim(); //link input
+            String searchword = ta.getText().trim(); //search term input
+            //Getting url and searchword texts
+
+            if (urlText.isEmpty() || searchword.isEmpty()) {
+                outputArea.setText("Please enter both a link and a search word");
+                return;
+            }//Text returns this error if both a search term and a link is not inserted
+
+            String allLinks = ""; //stores matching links found
+            try {
+                URL url = new URL(urlText); //creates url object from input
+
+                URLConnection urlc = url.openConnection();
+                urlc.setRequestProperty("User-Agent", "Mozilla 5.0 (Windows; U; " + "Windows NT 5.1; en-US; rv:1.8.0.11) "); //opens connection to url
+
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(urlc.getInputStream())
+                ); //reading
+                String line;
+                while ((line = reader.readLine()) != null) {//reading line by line
+                    int pos = 0; //start position for searching within the line
+                    while ((pos = line.indexOf("href=", pos)) != -1) { //find EACh occurance of href
+                        int start = pos + 5; //moving past href= (5 chars so +5)
+                        char quote = line.charAt(start); //Getting the quote char type
+                        if (quote == '"' || quote == '\'') {
+                            int end = line.indexOf(quote, start + 1); //Finding closing quote
+                            if (end != -1) { //when closing quote found
+                                String link = line.substring(start + 1, end); //extract quote
+                                if (link.contains(searchword)) { //checking if it has search term
+                                    allLinks += link + "\n"; //adding to results
+                                }
+                                pos = end + 1; // continue searching rest of line
+                            } else break; //stop if no closing quote
+                        } else break; //stop if no other href
+                    }
+                }
+                reader.close();
+            } catch (Exception ex) {//for when it fails
+                allLinks = "Error: " + ex.getMessage();
+            }
+
+            if (allLinks.isEmpty()) {
+                allLinks = "No links found containing \"" + searchword + "\""; //if no matches are found
+            }   else {
+                //build HTML with clickable links
+                StringBuilder html = new StringBuilder("<html><body>");
+                String[] lines = allLinks.split("\\R");   // split on newlines
+                //iterates through each found link
+                for (String link : lines) {
+                    link = link.trim();//removing extra spaces
+                    if (link.isEmpty()) continue; //skips empty lines
+
+                    //adds eahc link as a clickable html anchor
+                    html.append("<a href=\"")
+                            .append(link)
+                            .append("\">")
+                            .append(link)
+                            .append("</a><br>");
+                }
+
+                html.append("</body></html>"); //closes html structure
+
+                outputArea.setText(html.toString()); //displays clickable links in outputarea
+            }
+
+        }
 
 
 
