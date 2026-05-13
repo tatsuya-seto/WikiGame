@@ -23,7 +23,7 @@ public class WikiGame {
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainFrame.setLayout(new BorderLayout(10, 10));
 
-        // --- Input Panel ---
+        //Input Panel
         JPanel inputPanel = new JPanel(new GridBagLayout());
         inputPanel.setBorder(BorderFactory.createTitledBorder("Search Settings"));
         GridBagConstraints gbc = new GridBagConstraints();
@@ -59,14 +59,14 @@ public class WikiGame {
         gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 2;
         inputPanel.add(buttonPanel, gbc);
 
-        // --- Log Area ---
+        //log Area
         logArea = new JTextArea();
         logArea.setEditable(false);
         logArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         JScrollPane scrollPane = new JScrollPane(logArea);
         scrollPane.setBorder(BorderFactory.createTitledBorder("Search Log"));
 
-        // --- Status Bar ---
+        //Status Bar
         statusLabel = new JLabel("Enter Wikipedia article paths and click Find Path.");
         statusLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
         statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
@@ -85,6 +85,6 @@ public class WikiGame {
     }
 
     private void startSearch() {
-        // wire your logic here
+
     }
 }
