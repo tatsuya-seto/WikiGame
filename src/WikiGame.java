@@ -1,13 +1,21 @@
 import javax.swing.*;
 import java.awt.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
 
 public class WikiGame {
 
     private JFrame mainFrame;
-    private JTextField startField, endField, depthField;
+    private JTextField startField, endField;
     private JTextArea logArea;
     private JButton searchButton, stopButton;
     private JLabel statusLabel;
+
+    private int maxDepth = 2;
+    private ArrayList<String> path = new ArrayList<>();
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(WikiGame::new);
@@ -23,7 +31,7 @@ public class WikiGame {
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainFrame.setLayout(new BorderLayout(10, 10));
 
-        //Input Panel
+        // Input Panel
         JPanel inputPanel = new JPanel(new GridBagLayout());
         inputPanel.setBorder(BorderFactory.createTitledBorder("Search Settings"));
         GridBagConstraints gbc = new GridBagConstraints();
@@ -42,12 +50,6 @@ public class WikiGame {
         endField = new JTextField("/wiki/Milton_Academy", 35);
         inputPanel.add(endField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 2; gbc.weightx = 0;
-        inputPanel.add(new JLabel("Max Depth:"), gbc);
-        gbc.gridx = 1; gbc.weightx = 0;
-        depthField = new JTextField("2", 5);
-        inputPanel.add(depthField, gbc);
-
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         searchButton = new JButton("Find Path");
         searchButton.setFont(new Font("SansSerif", Font.BOLD, 13));
@@ -59,14 +61,14 @@ public class WikiGame {
         gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 2;
         inputPanel.add(buttonPanel, gbc);
 
-        //log Area
+        // Log Area
         logArea = new JTextArea();
         logArea.setEditable(false);
         logArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         JScrollPane scrollPane = new JScrollPane(logArea);
         scrollPane.setBorder(BorderFactory.createTitledBorder("Search Log"));
 
-        //Status Bar
+        // Status Bar
         statusLabel = new JLabel("Enter Wikipedia article paths and click Find Path.");
         statusLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
         statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
@@ -85,6 +87,61 @@ public class WikiGame {
     }
 
     private void startSearch() {
+        String startLink = startField.getText().trim();
+        String endLink = endField.getText().trim();
+        path.clear();
+        logArea.setText("");
+        searchButton.setEnabled(false);
+        stopButton.setEnabled(true);
 
+        new Thread(() -> {
+            if (findLink(startLink, endLink, 0)) {
+                path.add(0, startLink);
+                log("Found it! Path: " + String.join(" -> ", path));
+                SwingUtilities.invokeLater(() -> statusLabel.setText("Path found in " + (path.size() - 1) + " steps!"));
+            } else {
+                log("Did not find it.");
+                SwingUtilities.invokeLater(() -> statusLabel.setText("No path found."));
+            }
+            SwingUtilities.invokeLater(() -> {
+                searchButton.setEnabled(true);
+                stopButton.setEnabled(false);
+            });
+        }).start();
+    }
+
+    // Recursion method
+    public boolean findLink(String currentLink, String endLink, int depth) {
+        log("depth is: " + depth + ", link is: https://en.wikipedia.org" + currentLink);
+
+        // BASE CASE: we reached the target
+        if (currentLink.equals(endLink)) {
+            return true;
+        }
+        //base case: gone too deep
+        else if (depth >= maxDepth) {
+            return false;
+        }
+        //general recursive case
+        else {
+            ArrayList<String> links = getLinks(currentLink);
+            for (String link : links) {
+                if (findLink(link, endLink, depth + 1)) {
+                    path.add(0, link);
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+
+
+    private void log(String msg) {
+        SwingUtilities.invokeLater(() -> {
+            logArea.append(msg + "\n");
+            logArea.setCaretPosition(logArea.getDocument().getLength());
+        });
     }
 }
