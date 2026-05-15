@@ -259,13 +259,3 @@ public class WikiGame {
             }
 
         }
-
-
-
-    private void log(String msg) {
-        SwingUtilities.invokeLater(() -> {
-            logArea.append(msg + "\n");
-            logArea.setCaretPosition(logArea.getDocument().getLength());
-        });
-    }
-}
