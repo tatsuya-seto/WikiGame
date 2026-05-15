@@ -1,11 +1,9 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 
 public class WikiGame {
@@ -16,8 +14,10 @@ public class WikiGame {
     private JButton searchButton, stopButton;
     private JLabel statusLabel;
 
-    private int maxDepth = 5;
+    private int maxDepth = 2;
     private ArrayList<String> path = new ArrayList<>();
+    private ArrayList<String> visited = new ArrayList<>();
+    private volatile boolean stopped = false;
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(WikiGame::new);
@@ -43,13 +43,13 @@ public class WikiGame {
         gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0;
         inputPanel.add(new JLabel("Start Article (/wiki/...):"), gbc);
         gbc.gridx = 1; gbc.weightx = 1.0;
-        startField = new JTextField("/wiki/Banana", 35);
+        startField = new JTextField("/wiki/G7", 35);
         inputPanel.add(startField, gbc);
 
         gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0;
         inputPanel.add(new JLabel("End Article (/wiki/...):"), gbc);
         gbc.gridx = 1; gbc.weightx = 1.0;
-        endField = new JTextField("/wiki/Milton_Academy", 35);
+        endField = new JTextField("/wiki/Great_Depression", 35);
         inputPanel.add(endField, gbc);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -81,6 +81,7 @@ public class WikiGame {
 
         searchButton.addActionListener(e -> startSearch());
         stopButton.addActionListener(e -> {
+            stopped = true;
             stopButton.setEnabled(false);
             statusLabel.setText("Stopping...");
         });
@@ -92,6 +93,7 @@ public class WikiGame {
         String startLink = startField.getText().trim();
         String endLink = endField.getText().trim();
         path.clear();
+        stopped = false;
         logArea.setText("");
         searchButton.setEnabled(false);
         stopButton.setEnabled(true);
@@ -114,26 +116,32 @@ public class WikiGame {
 
     // Recursion method
     public boolean findLink(String currentLink, String endLink, int depth) {
+        if (stopped) return false;
+
         log("depth is: " + depth + ", link is: https://en.wikipedia.org" + currentLink);
 
         // BASE CASE: we reached the target
         if (currentLink.equals(endLink)) {
             return true;
         }
-        //base case: gone too deep
+        // BASE CASE: gone too deep
         else if (depth >= maxDepth) {
             return false;
         }
-        //general recursive case
+        // GENERAL RECURSIVE CASE
         else {
+            visited.add(currentLink);
             ArrayList<String> links = getLinks(currentLink);
             for (String link : links) {
-                if (findLink(link, endLink, depth + 1)) {
+                if (stopped) return false;
+                if (!visited.contains(link) && findLink(link, endLink, depth + 1)) {
                     path.add(0, link);
                     return true;
                 }
             }
         }
+
+
 
         return false;
     }
@@ -179,7 +187,7 @@ public class WikiGame {
             String link = html.substring(hrefIdx, end);
 
             // Skip special pages
-            if (!link.contains(":") && !link.contains("#") && !links.contains(link)) {
+            if (!link.contains(":") && !link.contains("#") && !links.contains(link) && !link.equals("/wiki/Main_Page")) {
                 links.add(link);
             }
 
@@ -189,73 +197,10 @@ public class WikiGame {
         return links;
     }
 
-    public void actionPerformed(ActionEvent e) {
-        String command = e.getActionCommand(); //which button was pressed?
-        if (command.equals("go")) { //checks if command was go(go is the command for the go button)
-            String urlText = Link.getText().trim(); //link input
-            String searchword = ta.getText().trim(); //search term input
-            //Getting url and searchword texts
-
-            if (urlText.isEmpty() || searchword.isEmpty()) {
-                outputArea.setText("Please enter both a link and a search word");
-                return;
-            }//Text returns this error if both a search term and a link is not inserted
-
-            String allLinks = ""; //stores matching links found
-            try {
-                URL url = new URL(urlText); //creates url object from input
-
-                URLConnection urlc = url.openConnection();
-                urlc.setRequestProperty("User-Agent", "Mozilla 5.0 (Windows; U; " + "Windows NT 5.1; en-US; rv:1.8.0.11) "); //opens connection to url
-
-                BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(urlc.getInputStream())
-                ); //reading
-                String line;
-                while ((line = reader.readLine()) != null) {//reading line by line
-                    int pos = 0; //start position for searching within the line
-                    while ((pos = line.indexOf("href=", pos)) != -1) { //find EACh occurance of href
-                        int start = pos + 5; //moving past href= (5 chars so +5)
-                        char quote = line.charAt(start); //Getting the quote char type
-                        if (quote == '"' || quote == '\'') {
-                            int end = line.indexOf(quote, start + 1); //Finding closing quote
-                            if (end != -1) { //when closing quote found
-                                String link = line.substring(start + 1, end); //extract quote
-                                if (link.contains(searchword)) { //checking if it has search term
-                                    allLinks += link + "\n"; //adding to results
-                                }
-                                pos = end + 1; // continue searching rest of line
-                            } else break; //stop if no closing quote
-                        } else break; //stop if no other href
-                    }
-                }
-                reader.close();
-            } catch (Exception ex) {//for when it fails
-                allLinks = "Error: " + ex.getMessage();
-            }
-
-            if (allLinks.isEmpty()) {
-                allLinks = "No links found containing \"" + searchword + "\""; //if no matches are found
-            }   else {
-                //build HTML with clickable links
-                StringBuilder html = new StringBuilder("<html><body>");
-                String[] lines = allLinks.split("\\R");   // split on newlines
-                //iterates through each found link
-                for (String link : lines) {
-                    link = link.trim();//removing extra spaces
-                    if (link.isEmpty()) continue; //skips empty lines
-
-                    //adds eahc link as a clickable html anchor
-                    html.append("<a href=\"")
-                            .append(link)
-                            .append("\">")
-                            .append(link)
-                            .append("</a><br>");
-                }
-
-                html.append("</body></html>"); //closes html structure
-
-                outputArea.setText(html.toString()); //displays clickable links in outputarea
-            }
-
-        }
+    private void log(String msg) {
+        SwingUtilities.invokeLater(() -> {
+            logArea.append(msg + "\n");
+            logArea.setCaretPosition(logArea.getDocument().getLength());
+        });
+    }
+}
