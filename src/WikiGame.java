@@ -133,9 +133,10 @@ public class WikiGame {
             if (currentLink.equals(endLink)) {
                 return true;
             }
+
             // BASE CASE: gone too deep
             else if (depth >= i) {
-                return false;
+                continue;
             }
 
             // GENERAL RECURSIVE CASE
@@ -152,6 +153,7 @@ public class WikiGame {
             }
 
         }
+
         return false;
     }
 
