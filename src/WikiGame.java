@@ -9,12 +9,11 @@ import java.util.ArrayList;
 public class WikiGame {
 
     private JFrame mainFrame;
-    private JTextField startField, endField;
+    private JTextField startField, endField, depthField;
     private JTextArea logArea;
     private JButton searchButton, stopButton;
     private JLabel statusLabel;
 
-    private int maxDepth = 2;
     private ArrayList<String> path = new ArrayList<>();
     private ArrayList<String> visited = new ArrayList<>();
     private volatile boolean stopped = false;
@@ -59,6 +58,12 @@ public class WikiGame {
         stopButton.setEnabled(false);
         buttonPanel.add(searchButton);
         buttonPanel.add(stopButton);
+
+        gbc.gridx = 0; gbc.gridy = 2; gbc.weightx = 0;
+        inputPanel.add(new JLabel("Depth"), gbc);
+        gbc.gridx = 1; gbc.weightx = 1.0;
+        depthField = new JTextField("2", 35);
+        inputPanel.add(depthField, gbc);
 
         gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 2;
         inputPanel.add(buttonPanel, gbc);
@@ -117,6 +122,8 @@ public class WikiGame {
     // Recursion method
     public boolean findLink(String currentLink, String endLink, int depth) {
         if (stopped) return false;
+        String stringDepth = depthField.getText().trim();
+        int maxDepth = Integer.parseInt(stringDepth);
 
         log("depth is: " + depth + ", link is: https://en.wikipedia.org" + currentLink);
 
