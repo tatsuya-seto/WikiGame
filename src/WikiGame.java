@@ -121,35 +121,37 @@ public class WikiGame {
 
     // Recursion method
     public boolean findLink(String currentLink, String endLink, int depth) {
-        if (stopped) return false;
         String stringDepth = depthField.getText().trim();
         int maxDepth = Integer.parseInt(stringDepth);
+        for (int i=0;i<(maxDepth+1); i++) {
 
-        log("depth is: " + depth + ", link is: https://en.wikipedia.org" + currentLink);
+            if (stopped) return false;
 
-        // BASE CASE: we reached the target
-        if (currentLink.equals(endLink)) {
-            return true;
-        }
-        // BASE CASE: gone too deep
-        else if (depth >= maxDepth) {
-            return false;
-        }
-        // GENERAL RECURSIVE CASE
-        else {
-            visited.add(currentLink);
-            ArrayList<String> links = getLinks(currentLink);
-            for (String link : links) {
-                if (stopped) return false;
-                if (!visited.contains(link) && findLink(link, endLink, depth + 1)) {
-                    path.add(0, link);
-                    return true;
+            log("depth is: " + depth + ", link is: https://en.wikipedia.org" + currentLink);
+
+            // BASE CASE: we reached the target
+            if (currentLink.equals(endLink)) {
+                return true;
+            }
+            // BASE CASE: gone too deep
+            else if (depth >= i) {
+                return false;
+            }
+
+            // GENERAL RECURSIVE CASE
+            else {
+                visited.add(currentLink);
+                ArrayList<String> links = getLinks(currentLink);
+                for (String link : links) {
+                    if (stopped) return false;
+                    if (!visited.contains(link) && findLink(link, endLink, depth + 1)) {
+                        path.add(0, link);
+                        return true;
+                    }
                 }
             }
+
         }
-
-
-
         return false;
     }
 
