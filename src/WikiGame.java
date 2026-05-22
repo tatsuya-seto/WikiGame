@@ -104,11 +104,21 @@ public class WikiGame {
         stopButton.setEnabled(true);
 
         new Thread(() -> {
-            if (findLink(startLink, endLink, 0)) {
-                path.add(0, startLink);
-                log("Found it! Path: " + String.join(" -> ", path));
-                SwingUtilities.invokeLater(() -> statusLabel.setText("Path found in " + (path.size() - 1) + " steps!"));
-            } else {
+            int maxDepth = Integer.parseInt(depthField.getText().trim());
+            boolean found = false;
+            for (int d = 1; d <= maxDepth && !stopped; d++) {
+                log("\n--- Trying depth " + d + " ---");
+                path.clear();
+                visited.clear();
+                if (findLink(startLink, endLink, 0, d)) {
+                    path.add(0, startLink);
+                    log("Found it! Path: " + String.join(" -> ", path));
+                    SwingUtilities.invokeLater(() -> statusLabel.setText("Path found in " + (path.size() - 1) + " steps!"));
+                    found = true;
+                    break;
+                }
+            }
+            if (!found && !stopped) {
                 log("Did not find it.");
                 SwingUtilities.invokeLater(() -> statusLabel.setText("No path found."));
             }
@@ -120,40 +130,31 @@ public class WikiGame {
     }
 
     // Recursion method
-    public boolean findLink(String currentLink, String endLink, int depth) {
-        String stringDepth = depthField.getText().trim();
-        int maxDepth = Integer.parseInt(stringDepth);
-        for (int i=0;i<(maxDepth+1); i++) {
+    public boolean findLink(String currentLink, String endLink, int depth, int maxDepth) {
+        if (stopped) return false;
 
-            if (stopped) return false;
+        log("depth is: " + depth + ", link is: https://en.wikipedia.org" + currentLink);
 
-            log("depth is: " + depth + ", link is: https://en.wikipedia.org" + currentLink);
-
-            // BASE CASE: we reached the target
-            if (currentLink.equals(endLink)) {
-                return true;
-            }
-
-            // BASE CASE: gone too deep
-            else if (depth >= i) {
-                continue;
-            }
-
-            // GENERAL RECURSIVE CASE
-            else {
-                visited.add(currentLink);
-                ArrayList<String> links = getLinks(currentLink);
-                for (String link : links) {
-                    if (stopped) return false;
-                    if (!visited.contains(link) && findLink(link, endLink, depth + 1)) {
-                        path.add(0, link);
-                        return true;
-                    }
+        // BASE CASE: we reached the target
+        if (currentLink.equals(endLink)) {
+            return true;
+        }
+        // BASE CASE: gone too deep
+        else if (depth >= maxDepth) {
+            return false;
+        }
+        // GENERAL RECURSIVE CASE
+        else {
+            visited.add(currentLink);
+            ArrayList<String> links = getLinks(currentLink);
+            for (String link : links) {
+                if (stopped) return false;
+                if (!visited.contains(link) && findLink(link, endLink, depth + 1, maxDepth)) {
+                    path.add(0, link);
+                    return true;
                 }
             }
-
         }
-
         return false;
     }
 
