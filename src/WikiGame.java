@@ -155,6 +155,7 @@ public class WikiGame {
                 }
             }
         }
+        visited.remove(currentLink);
         return false;
     }
 
