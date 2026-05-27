@@ -104,7 +104,7 @@ public class WikiGame {
         stopButton.setEnabled(true);
 
         new Thread(() -> {
-            int maxDepth = Integer.parseInt(depthField.getText().trim());
+            int maxDepth = Integer.parseInt(depthField.getText().trim()); //depth chosen by user
             boolean found = false;
             for (int d = 1; d <= maxDepth && !stopped; d++) {
                 log("\n--- Trying depth " + d + " ---");
