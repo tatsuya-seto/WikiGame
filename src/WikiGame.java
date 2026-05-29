@@ -99,7 +99,7 @@ public class WikiGame {
         String endLink = endField.getText().trim();
         path.clear();
         stopped = false;
-        logArea.setText("");3fewfewf
+        logArea.setText("");
         searchButton.setEnabled(false);
         stopButton.setEnabled(true);
 
